@@ -1,11 +1,15 @@
 package com.simonbaars.clonerefactor.detection.model.location;
 
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.github.javaparser.Range;
 import com.github.javaparser.ast.Node;
 import com.simonbaars.clonerefactor.context.analyze.CloneLocation;
 import com.simonbaars.clonerefactor.context.enums.LocationType;
+import com.simonbaars.clonerefactor.settings.Settings;
 
 public class Location implements Comparable<Location>, HasRange {
 	private final Path file;
@@ -23,16 +27,22 @@ public class Location implements Comparable<Location>, HasRange {
 	public Location(Location clonedLocation) {
 		this(clonedLocation, clonedLocation.range);
 	}
-
-	public Location(Path file, Range range) {
+	
+	public Location(Settings s, Path file, Range r) {
 		this.file = file;
-		this.range = range;
-		this.contents = new LocationContents(range);
+		this.range = r;
+		this.contents = new LocationContents(s, r);
+	}
+
+	public Location(Path file, LocationContents contents) {
+		this.file = file;
+		this.range = contents.getRange();
+		this.contents = contents;
 	}
 
 	public Location(Location clonedLocation, Range r) {
 		this.file = clonedLocation.file;
-		this.contents = new LocationContents(clonedLocation.contents, r);
+		this.contents = new LocationContents(clonedLocation.contents.settings, clonedLocation.contents, r);
 		this.range = r;
 		this.prev = clonedLocation.prev;
 		this.clone = clonedLocation.clone;
@@ -46,7 +56,6 @@ public class Location implements Comparable<Location>, HasRange {
 	}
 	
 	private boolean isRangeVisited(Range r) {
-		//System.out.println("Determine visited range "+r+" with "+range+"and isvisited "+isVisited);
 		if(!r.contains(range))
 			return true;
 		else if(!isVisited)
@@ -56,15 +65,15 @@ public class Location implements Comparable<Location>, HasRange {
 		return next.isRangeVisited(r);
 	}
 
-	public Location(Path path, Location prevLocation, Node n) {
-		this(path, n);
-		this.prev = prevLocation;
+	public Location(Settings s, Path file, Node...nodes) {
+		this.file = file;
+		this.contents = new LocationContents(s, nodes);
+		this.range = this.contents.getRange();
 	}
 
-	public Location(Path file, Node...nodes) {
-		this.file = file;
-		this.contents = new LocationContents(nodes);
-		this.range = this.contents.getRange();
+	public Location(Settings settings, Path path, Location prevLocation, Node n) {
+		this(settings, path, n);
+		this.prev = prevLocation;
 	}
 
 	public Path getFile() {
@@ -84,7 +93,7 @@ public class Location implements Comparable<Location>, HasRange {
 		return "Location [file=" + file + ", range=" + range + "]";
 	}
 	
-	public int getAmountOfLines() {
+	public int getNumberOfLines() {
 		return getContents().getAmountOfLines();
 	}
 
@@ -94,7 +103,7 @@ public class Location implements Comparable<Location>, HasRange {
 		return file == null ? other.file == null : file.equals(other.file);
 	}
 
-	public int getAmountOfTokens() {
+	public int getNumberOfTokens() {
 		return getContents().getAmountOfTokens();
 	}
 
@@ -142,7 +151,7 @@ public class Location implements Comparable<Location>, HasRange {
 		this.range = contents.getRange();
 	}
 
-	public int getAmountOfNodes() {
+	public int getNumberOfNodes() {
 		return getContents().getNodes().size();
 	}
 
@@ -176,5 +185,9 @@ public class Location implements Comparable<Location>, HasRange {
 
 	public Node getLastNode() {
 		return getContents().getNodes().get(getContents().getNodes().size()-1);
+	}
+	
+	public Set<Integer> lines(){
+		return IntStream.rangeClosed(getRange().begin.line, getRange().end.line).boxed().collect(Collectors.toSet());
 	}
 }

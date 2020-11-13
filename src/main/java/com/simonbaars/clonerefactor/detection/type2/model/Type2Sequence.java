@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.simonbaars.clonerefactor.detection.interfaces.CalculatesPercentages;
 import com.simonbaars.clonerefactor.detection.interfaces.ChecksForComparability;
-import com.simonbaars.clonerefactor.detection.interfaces.ChecksThresholds;
+import com.simonbaars.clonerefactor.detection.interfaces.HasSize;
 import com.simonbaars.clonerefactor.detection.model.Sequence;
 
-public class Type2Sequence implements CalculatesPercentages, ChecksThresholds, ChecksForComparability {
+public class Type2Sequence implements CalculatesPercentages, ChecksForComparability, HasSize {
 	private final List<Type2Location> statements;
 
 	public Type2Sequence() {
@@ -32,25 +33,25 @@ public class Type2Sequence implements CalculatesPercentages, ChecksThresholds, C
 	}
 	
 	public int[] locationArray() {
-		return statements.stream().mapToInt(e -> e.getLocationIndex()).sorted().toArray();
+		return statements.stream().mapToInt(Type2Location::getLocationIndex).sorted().toArray();
 	}
 	
 	public Object[] transformedEqualityArray(boolean left, int transform) {
 		return statements.stream().sorted().map(e -> new int[] {e.getLocationIndex(), left ? e.getStatementIndices().getStart()-transform : e.getStatementIndices().getEnd()+transform}).toArray();
 	}
 	
-	public void tryToExpand(List<Type2Sequence> clones) {
-		tryToExpand(clones, true);
-		tryToExpand(clones, false);
+	public void tryToExpand(Predicate<Double> threshold, List<Type2Sequence> clones) {
+		tryToExpand(threshold, clones, true);
+		tryToExpand(threshold, clones, false);
 	}
 
-	private void tryToExpand(List<Type2Sequence> clones, boolean left) {
+	private void tryToExpand(Predicate<Double> threshold, List<Type2Sequence> clones, boolean left) {
 		List<Type2Location> curStatements = new ArrayList<>(statements);
 		List<Type2Sequence> mergedClones = new ArrayList<>();
 		while(!(curStatements = determineExpandedRow(curStatements, left)).isEmpty()) {
 			curStatements = checkSequenceExpansionOpportunities(mergedClones, clones, curStatements, left);
 			if(curStatements.isEmpty() || !allRowsComparable(curStatements)) return;
-			if(checkType2VariabilityThreshold(calculateVariability(curStatements))) {
+			if(threshold.test(calculateVariability(curStatements))) {
 				this.statements.clear();
 				this.statements.addAll(curStatements);
 				clones.removeAll(mergedClones);

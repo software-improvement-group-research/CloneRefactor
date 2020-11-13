@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import com.simonbaars.clonerefactor.Main;
-import com.simonbaars.clonerefactor.core.util.DoesFileOperations;
 import com.simonbaars.clonerefactor.core.util.SavePaths;
 import com.simonbaars.clonerefactor.detection.model.DetectionResults;
 import com.simonbaars.clonerefactor.helper.Type1Test;
@@ -13,7 +12,6 @@ import com.simonbaars.clonerefactor.scripts.model.MetricsTable;
 import com.simonbaars.clonerefactor.settings.CloneType;
 import com.simonbaars.clonerefactor.settings.Scope;
 import com.simonbaars.clonerefactor.settings.Settings;
-import com.simonbaars.clonerefactor.thread.CorpusThread;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -21,7 +19,7 @@ import junit.framework.TestSuite;
 /**
  * Unit test for the clone detector.
  */
-public class Type1Testcases extends Type1Test implements DoesFileOperations {
+public class Type1Testcases extends Type1Test {
     private static final String SEVERAL_METHODS_PROJECT = "SeveralMethodsCloned";
 	private static final String UNEQUAL_SIZE_CLONES_PROJECT = "UnequalSizeClones";
 	private static final String SINGLE_FILE_PROJECT = "SingleFile";
@@ -131,7 +129,7 @@ public class Type1Testcases extends Type1Test implements DoesFileOperations {
 		Settings.get().setCloneType(CloneType.TYPE1R);
     }
     
-    public void testThread() {
+   /* public void testThread() {
     	System.out.println("custom2");
     	CorpusThread t = new CorpusThread(new File("/Users/sbaars/clone/java_projects/gatein-forge-plugin/src/main/java/"));
     	while(t.isAlive())
@@ -140,7 +138,7 @@ public class Type1Testcases extends Type1Test implements DoesFileOperations {
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
-    }
+    }*/
     
     /**
      * Test for clones that consist of lines that do not occur elsewhere.
